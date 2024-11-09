@@ -61,6 +61,11 @@ switch ($url) {
         require __DIR__ . '/src/views/user/deposit.php';
         break;
 
+        case 'upload':
+            $title = 'Upload';
+            require __DIR__ . '/src/views/user/upload.php';
+            break;
+
     case 'history':
         $title = 'History';
         require __DIR__ . '/src/views/user/history.php';

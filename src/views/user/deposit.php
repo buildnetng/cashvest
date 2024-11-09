@@ -1,10 +1,15 @@
 <?php
+session_start();
 $cryptocurrencies = [
     'usdtt' => 'USDT',
     'btcusd' => 'BTC',
     'ethusd' => 'ETH',
     'ltcusd' => 'LTC',
 ];
+$user = $_SESSION['user_id'];
+
+echo "User Session Id: " . $user;
+
 ?>
 
 <?php require_once 'includes/users/head.php'; ?>
@@ -35,6 +40,54 @@ $cryptocurrencies = [
         #qrCodeImage {
             width: 150px !important;
         }
+
+          /* Modal Styling */
+          .modal {
+            display: none;
+            position: fixed;
+            z-index: 1050;
+            padding-top: 100px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 25px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+
+        .modal-content h4{
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .close {
+            color: red !important;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
     </style>
 
 
@@ -55,7 +108,7 @@ $cryptocurrencies = [
 
 
 
-                                <form id="depositForm" method="GET" action="">
+                                <form id="depositForm" method="POST">
                                     <div class="mb-4">
                                         <label class="">Choose Crypto Asset</label>
                                         <select id="cryptoDropdown" name="cryptoAsset" class="form-select form-control" required>
@@ -78,7 +131,8 @@ $cryptocurrencies = [
                                             <div class="deposit-info-card card mb-3 border shadow-none p-3">
                                                 <label class="">Pay with Wallet Address:</label>
                                                 <div class="d-flex align-items-center mb-3 border shadow-none rounded-pill">
-                                                    <span class="wallet-address text-truncate  flex-grow-1 me-2" id="walletAddress"></span>
+                                                    <span class="wallet-address text-truncate  flex-grow-1 me-2" id="walletAddress" name="walletAddress"></span>
+                                                    <input type="hidden" name="walletAddress" id="getWallet">
                                                     <button type="button" class="btn btn-xs btn-primary btn-icon rounded-pill" id="copyAddressBtn">
                                                         Copy
                                                     </button>
@@ -108,13 +162,29 @@ $cryptocurrencies = [
                                         </ul>
                                     </div>
 
-                                    <button id="submitDeposit" type="submit" class="btn button_default  d-none">Submit Deposit</button>
-                                </form>
+                                    <button id="submitDeposit" type="button" class="btn button_default  d-none">Preview Deposit</button>
+                                <!-- </form> -->
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-4"></div>
                 </div>
+
+                  <!-- Deposit Preview Modal -->
+                  <div id="depositPreviewModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h4>Deposit Preview</h4>
+                        <div id="previewContent">
+                            <!-- Preview details will be populated by JavaScript -->
+                        </div>
+                        <button id="confirmDeposit" type="submit" class="btn btn-success mt-3">Confirm and Submit</button>
+                    </div>
+                </div>
+
+                <input type="hidden" name="deposit_request" value="1">
+
+                </form>
 
                 <div class="row mt-4" style="display: none;">
                     <div class="col-xl-12 col-md-12">
@@ -225,6 +295,7 @@ $cryptocurrencies = [
 
                 function updateDepositSummary() {
                     const amount = parseFloat($('#amountInput').val());
+                    const $address = $('#getWallet').val();
                     const $summary = $('#depositSummary');
                     const $summaryList = $('#summaryList');
 
@@ -248,6 +319,7 @@ $cryptocurrencies = [
 
                         $summaryList.html(`
                 <li>Crypto Asset: ${cryptoSymbol}</li>
+                <li>Wallet Address: ${$address}</li>
                 <li>Amount: ${formatDualCurrency(amount)}</li>
                 <li>Deposit Charges: ${formatDualCurrency(fee)}</li>
                 <li>Total Amount (incl. fees): ${formatDualCurrency(total)}</li>
@@ -264,22 +336,29 @@ $cryptocurrencies = [
                 function updateWalletInfo() {
                     if (selectedCrypto) {
                         let walletAddress, qrCode;
+                        let getWalletAddress = $('#getWallet');
+                        
                         switch (selectedCrypto) {
                             case 'usdtt':
                                 walletAddress = 'your_usdt_wallet_address_here';
                                 qrCode = 'https://api.qrserver.com/v1/create-qr-code/?data=your_usdt_wallet_address_here';
+                                getWalletAddress.val(walletAddress);
+                                
                                 break;
                             case 'btcusd':
                                 walletAddress = 'your_btc_wallet_address_here';
                                 qrCode = 'https://api.qrserver.com/v1/create-qr-code/?data=your_btc_wallet_address_here';
+                                getWalletAddress.val(walletAddress);
                                 break;
                             case 'ethusd':
                                 walletAddress = 'your_eth_wallet_address_here';
                                 qrCode = 'https://api.qrserver.com/v1/create-qr-code/?data=your_eth_wallet_address_here';
+                                getWalletAddress.val(walletAddress);
                                 break;
                             case 'ltcusd':
                                 walletAddress = 'your_ltc_wallet_address_here';
                                 qrCode = 'https://api.qrserver.com/v1/create-qr-code/?data=your_ltc_wallet_address_here';
+                                getWalletAddress.val(walletAddress);
                                 break;
                             default:
                                 walletAddress = '';
@@ -304,6 +383,20 @@ $cryptocurrencies = [
                     updateDepositSummary();
                     updateProceedButton();
                 });
+
+                $('#submitDeposit').click(function() {
+                            const previewContent = $('#summaryList').html();
+                            $('#previewContent').html(previewContent);
+                            $('#depositPreviewModal').show();
+                        });
+
+                        $('.close').click(function() {
+                            $('#depositPreviewModal').hide();
+                        });
+
+                        $('#confirmDeposit').click(function() {
+                            $('#depositForm').submit();
+                        });
 
                 function fetchConversionRates() {
                     $.getJSON('https://api.coingecko.com/api/v3/simple/price?ids=tether,bitcoin,ethereum,litecoin&vs_currencies=usd', function(data) {

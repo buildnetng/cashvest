@@ -1,6 +1,8 @@
 <?php
 require_once "../../config/config.php";
 require_once "../../vendor/mailer.php";
+
+
 if (isset($_POST['registration_request']) && $_SERVER['REQUEST_METHOD'] == "POST") {
     session_start();
     $fullname = htmlspecialchars(trim($_POST['fullname'] ?? ''));
@@ -117,6 +119,7 @@ if (isset($_POST['registration_request']) && $_SERVER['REQUEST_METHOD'] == "POST
     $user_id = $conn->insert_id;
     $stmt->close();
 
+    $_SESSION['online'] = true;
     $_SESSION['user_id'] = $user_id;
     $_SESSION['user_name'] = $first_name . ' ' . $last_name;
     $_SESSION['user_email'] = $email;
@@ -185,6 +188,7 @@ else if (isset($_POST['login_request']) && $_SERVER['REQUEST_METHOD'] === "POST"
                     // Verify the password using password_verify
                     if (!empty($hashed_password) && password_verify($password, $hashed_password)) {
                         // Set session variables
+                        $_SESSION['online'] = true;
                         $_SESSION['user_id'] = $row['user_id'];
                         $_SESSION['user_name'] = $account_info['firstname'] . " " . $account_info['lastname'];
                         $_SESSION['user_email'] = $account_info['email'];

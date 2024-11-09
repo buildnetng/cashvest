@@ -1,4 +1,4 @@
-  <nav class="navbar navbar-main navbar-expand-lg navbar-dark bg-primary navbar-border" id="navbar-main" style=" background-color: #ffffff !important">
+<nav class="navbar navbar-main navbar-expand-lg navbar-dark bg-primary navbar-border" id="navbar-main" style=" background-color: #ffffff !important">
       <div class="container-fluid">
           <a href="#" class="nav-link nav-link-icon sidenav-toggler" data-action="sidenav-pin"
               data-target="#sidenav-main"><i class="far fa-bars"></i></a>

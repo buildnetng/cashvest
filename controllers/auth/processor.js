@@ -1,11 +1,26 @@
 function ajaxSubmitForm(formId, url, redirectUrl = null) {
+  let isSubmitting = false; // Submission flag
+  const minimumDelay = 1000; // Minimum delay in milliseconds (1 second)
+
   $(formId).on("submit", function (e) {
     e.preventDefault();
 
-    var formData = $(this).serialize();
-    var button = $(this).find("button");
+    // Prevent further submissions if already submitting
+    if (isSubmitting) return;
+    isSubmitting = true;
 
-    button.prop("disabled", true);
+    const formData = $(this).serialize();
+    const submitButtons = $(this).find(":submit"); // Target submit buttons
+
+    // Disable all submit buttons and add the spinner
+    submitButtons
+      .prop("disabled", true)
+      .addClass("disabled-btn")
+      .html(
+        'Submitting... <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>'
+      );
+
+    const startTime = Date.now(); // Track the start time for delay calculation
 
     $.ajax({
       type: "POST",
@@ -28,16 +43,20 @@ function ajaxSubmitForm(formId, url, redirectUrl = null) {
                 transitionOut: "fadeOutUp",
               });
             });
-            if (redirectUrl) {
+            if (response.redirect) {
+              setTimeout(() => {
+                window.location.href = response.redirect;
+              }, 500);
+            } else if (redirectUrl) {
               setTimeout(() => {
                 window.location.href = redirectUrl;
-              }, 500); // Adjust the delay as needed
+              }, 500);
             }
           }
         } else {
           if (response.messages && Array.isArray(response.messages)) {
             response.messages.forEach(function (message) {
-              showErrorToast(message);
+              showErrorToast(message, 10000);
             });
           } else {
             showErrorToast("An unexpected error occurred.");
@@ -49,7 +68,21 @@ function ajaxSubmitForm(formId, url, redirectUrl = null) {
         showErrorToast("Failed to submit the form. Please try again later.");
       },
       complete: function () {
-        button.prop("disabled", false);
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = minimumDelay - elapsed;
+
+        // Delay re-enabling the button if necessary
+        setTimeout(
+          () => {
+            submitButtons
+              .prop("disabled", false)
+              .removeClass("disabled-btn")
+              .html("Submit"); // Reset the button text
+
+            isSubmitting = false;
+          },
+          remainingDelay > 0 ? remainingDelay : 0
+        );
       },
     });
   });
@@ -74,4 +107,5 @@ function showErrorToast(message) {
 $(document).ready(function () {
   ajaxSubmitForm("#signUpForm", "controllers/auth/form_processor.php", "home");
   ajaxSubmitForm("#signInForm", "controllers/auth/form_processor.php", "home");
+  ajaxSubmitForm("#depositForm", "controllers/user/deposit_processor.php", "upload");
 });
